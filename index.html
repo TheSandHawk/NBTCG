@@ -1,18 +1,219 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Meine Website</title>
-    <link rel="stylesheet" href="/style.css">
+    <meta
+      name="description"
+      content="Northbound TCG ist eine unabhängige Riftbound-Spielgruppe. Wir spielen aus Spaß, testen Decks und besuchen gemeinsam Events."
+    />
+
+    <title>Northbound TCG</title>
+
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="logo" href="#start">Northbound TCG</a>
+
+        <button
+          class="menu-toggle"
+          type="button"
+          aria-label="Navigation öffnen"
+          aria-expanded="false"
+          aria-controls="main-navigation"
+        >
+          Menü
+        </button>
+
+        <nav
+          id="main-navigation"
+          class="main-navigation"
+          aria-label="Hauptnavigation"
+        >
+          <a href="#start">Start</a>
+          <a href="#ueber-uns">Über uns</a>
+          <a href="#team">Team</a>
+          <a href="#aktivitaeten">Aktivitäten</a>
+          <a href="#kontakt">Kontakt</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section id="start" class="hero">
+        <div class="container hero-content">
+          <p class="eyebrow">Riftbound TCG Team</p>
+
+          <h1>Gemeinsam spielen. Decks testen. Spaß haben.</h1>
+
+          <p class="hero-text">
+            Wir sind Northbound TCG, eine kleine unabhängige Spielgruppe für
+            Riftbound. Bei uns geht es um gemeinsame Matches, neue Deckideen und
+            eine gute Zeit am Spieltisch.
+          </p>
+
+          <div class="hero-actions">
+            <a class="button" href="#team">Unser Team</a>
+
+            <a class="button button-secondary" href="#ueber-uns">
+              Mehr über uns
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section id="ueber-uns" class="section">
+        <div class="container content-grid">
+          <div>
+            <p class="eyebrow">Über uns</p>
+
+            <h2>Eine kleine Gruppe mit großer Begeisterung.</h2>
+          </div>
+
+          <div class="content-text">
+            <p>
+              Northbound TCG ist eine private und unabhängige Spielgruppe. Wir
+              sind kein eingetragener Verein und verfolgen keine kommerziellen
+              Interessen.
+            </p>
+
+            <p>
+              Wir spielen Riftbound aus Spaß, tauschen uns über Decks aus,
+              testen neue Strategien und nehmen gelegentlich gemeinsam an
+              lokalen Events teil.
+            </p>
+
+            <p>
+              Im Mittelpunkt stehen für uns Fairness, gegenseitiger Respekt und
+              die Freude am gemeinsamen Hobby.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="team" class="section section-muted">
+        <div class="container">
+          <p class="eyebrow">Unser Team</p>
+
+          <h2>Die Spieler hinter Northbound TCG</h2>
+
+          <div class="card-grid">
+            <article class="card team-card">
+              <div class="player-avatar" aria-hidden="true">M</div>
+
+              <h3>Marcel</h3>
+
+              <p class="player-role">Teammitglied</p>
+
+              <p>
+                Hier kannst du später deinen bevorzugten Spielstil, dein
+                Lieblingsdeck oder eine kurze persönliche Beschreibung
+                ergänzen.
+              </p>
+            </article>
+
+            <article class="card team-card">
+              <div class="player-avatar" aria-hidden="true">N</div>
+
+              <h3>Spielername</h3>
+
+              <p class="player-role">Teammitglied</p>
+
+              <p>
+                Hier kommt später eine kurze Beschreibung des zweiten
+                Teammitglieds hinein.
+              </p>
+            </article>
+
+            <article class="card team-card">
+              <div class="player-avatar" aria-hidden="true">?</div>
+
+              <h3>Weiteres Mitglied</h3>
+
+              <p class="player-role">Teammitglied</p>
+
+              <p>
+                Dieser Platz kann später für ein weiteres Mitglied genutzt
+                werden.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="aktivitaeten" class="section">
+        <div class="container">
+          <p class="eyebrow">Was wir machen</p>
+
+          <h2>Riftbound gemeinsam erleben</h2>
+
+          <div class="card-grid">
+            <article class="card">
+              <h3>Casual Matches</h3>
+
+              <p>
+                Wir treffen uns zum entspannten Spielen und testen verschiedene
+                Decks ohne unnötigen Leistungsdruck.
+              </p>
+            </article>
+
+            <article class="card">
+              <h3>Deckentwicklung</h3>
+
+              <p>
+                Gemeinsam besprechen wir Karten, Strategien und mögliche
+                Verbesserungen an unseren Decklisten.
+              </p>
+            </article>
+
+            <article class="card">
+              <h3>Events</h3>
+
+              <p>
+                Gelegentlich besuchen wir lokale Spieltage, Turniere oder andere
+                Community-Veranstaltungen.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="kontakt" class="section section-accent">
+        <div class="container contact-box">
+          <div>
+            <p class="eyebrow eyebrow-light">Kontakt</p>
+
+            <h2>Du möchtest mit uns spielen?</h2>
+
+            <p>
+              Melde dich gerne, wenn du aus der Region kommst, Riftbound spielst
+              oder einfach Kontakt zu unserer Spielgruppe aufnehmen möchtest.
+            </p>
+          </div>
+
+          <a class="button button-light" href="mailto:kontakt@example.de">
+            E-Mail schreiben
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-content">
+        <p>&copy; <span id="currentYear"></span> Northbound TCG</p>
+
+        <p class="disclaimer">
+          Northbound TCG ist eine unabhängige private Spielgruppe und steht in
+          keiner offiziellen Verbindung zu Riftbound oder dessen
+          Rechteinhabern.
+        </p>
+      </div>
+    </footer>
+
     <script type="module" src="/script.js"></script>
-</head>
-<body>
-    <h1>Meine erste Website mit VITE</h1>
-    <p>Die Website funktioniert.</p>
-
-    <button id="testButton">Klick mich</button>
-
-</body>
+  </body>
 </html>
