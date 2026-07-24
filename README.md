@@ -40,4 +40,4 @@ Voraussetzungen:
 Repository klonen:
 
 ```bash
-git clone https://github.com/DEIN-GITHUB-NAME/DEIN-REPOSITORY.git
+git clone https://github.com/TheSandHawk/NBTCG.git
