@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <meta
+      name="description"
+      content="Event Calendar for Northbound TCG. View upcoming Riftbound tournaments, casual game nights, and community events."
+    />
+
+    <title>Event Calendar | Northbound TCG</title>
+
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="logo" href="./index.html#start">Northbound TCG</a>
+
+        <button
+          class="menu-toggle"
+          type="button"
+          aria-label="Open navigation"
+          aria-expanded="false"
+          aria-controls="main-navigation"
+        >
+          Menu
+        </button>
+
+        <nav
+          id="main-navigation"
+          class="main-navigation"
+          aria-label="Main navigation"
+        >
+          <a href="./index.html#start">Home</a>
+          <a href="./index.html#ueber-uns">About us</a>
+          <a href="./index.html#team">Team</a>
+          <a href="./index.html#aktivitaeten">Activities</a>
+          <a href="./calendar.html" class="active">Calendar</a>
+          <a href="./index.html#kontakt">Contact</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="calendar-hero section">
+        <div class="container">
+          <p class="eyebrow">Events & Schedule</p>
+          <h1>Upcoming Events & Gatherings</h1>
+          <p class="hero-text">
+            Stay updated with Northbound TCG events. Join us for local tournaments, casual game nights, deck testing sessions, and community meetups.
+          </p>
+
+          <div class="calendar-controls-wrapper">
+            <!-- Category Filters -->
+            <div class="filter-bar" id="category-filters" role="group" aria-label="Filter events by category">
+              <button class="filter-pill active" data-category="all" type="button">All Events</button>
+              <button class="filter-pill" data-category="Tournament" type="button">Tournaments</button>
+              <button class="filter-pill" data-category="Casual" type="button">Casual Play</button>
+              <button class="filter-pill" data-category="Deck Building" type="button">Deck Building</button>
+              <button class="filter-pill" data-category="Community" type="button">Community</button>
+            </div>
+
+            <!-- Month Navigator -->
+            <div class="month-navigator">
+              <div class="month-nav-buttons">
+                <button id="prev-month-btn" class="button button-small button-outline" type="button" aria-label="Previous month">&larr; Prev</button>
+                <button id="today-btn" class="button button-small button-outline" type="button">Today</button>
+                <button id="next-month-btn" class="button button-small button-outline" type="button" aria-label="Next month">Next &rarr;</button>
+              </div>
+              <h2 id="calendar-month-title" class="month-title">July 2026</h2>
+            </div>
+          </div>
+
+          <!-- Calendar Grid View -->
+          <div class="calendar-grid-container">
+            <div class="calendar-weekdays">
+              <div>Mon</div>
+              <div>Tue</div>
+              <div>Wed</div>
+              <div>Thu</div>
+              <div>Fri</div>
+              <div>Sat</div>
+              <div>Sun</div>
+            </div>
+            <div id="calendar-grid" class="calendar-grid">
+              <!-- Dynamically populated by calendar.js -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Events List Section -->
+      <section class="section section-muted">
+        <div class="container">
+          <div class="events-list-header">
+            <div>
+              <p class="eyebrow">Details</p>
+              <h2>Events List</h2>
+            </div>
+            <span id="events-count-badge" class="badge-count">0 events</span>
+          </div>
+
+          <div id="events-list-container" class="events-list">
+            <!-- Dynamically populated by calendar.js -->
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Event Details Modal -->
+    <dialog id="event-modal" class="event-modal">
+      <div class="modal-content">
+        <button id="modal-close-btn" class="modal-close" type="button" aria-label="Close dialog">&times;</button>
+        <div class="modal-header">
+          <span id="modal-category" class="event-category-tag">Category</span>
+          <h3 id="modal-title">Event Title</h3>
+        </div>
+        <div class="modal-body">
+          <div class="modal-meta">
+            <div class="meta-item">
+              <span class="meta-icon">📅</span>
+              <div>
+                <strong>Date & Time</strong>
+                <p id="modal-date">Date here</p>
+              </div>
+            </div>
+            <div class="meta-item">
+              <span class="meta-icon">📍</span>
+              <div>
+                <strong>Location</strong>
+                <p id="modal-location">Location here</p>
+              </div>
+            </div>
+            <div class="meta-item">
+              <span class="meta-icon">⚔️</span>
+              <div>
+                <strong>Format / Game</strong>
+                <p id="modal-format">Format here</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-description">
+            <strong>Description</strong>
+            <p id="modal-description-text">Event description details will appear here.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="modal-dismiss-btn" class="button button-small" type="button">Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <footer class="site-footer">
+      <div class="container footer-content">
+        <div class="footer-meta">
+          <p>&copy; <span id="currentYear"></span> Northbound TCG</p>
+          <a class="footer-link" href="./calendar.html">Calendar</a>
+          <a class="footer-link" href="./admin.html">Administration</a>
+        </div>
+
+        <p class="disclaimer">
+          Northbound TCG is an independent private playgroup and is not
+          officially affiliated with Riftbound or its rights holders.
+        </p>
+      </div>
+    </footer>
+
+    <script type="module" src="./calendar.js"></script>
+  </body>
+</html>

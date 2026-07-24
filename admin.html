@@ -82,6 +82,10 @@
                 <span aria-hidden="true">⌂</span>
                 Overview
               </a>
+              <a href="#events">
+                <span aria-hidden="true">📅</span>
+                Events
+              </a>
               <a href="#planned">
                 <span aria-hidden="true">◇</span>
                 Planned areas
@@ -131,6 +135,79 @@
               <p class="admin-card-label">Website</p>
               <strong>Online</strong>
               <p>Public pages remain unchanged</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- Events Section -->
+        <section id="events" class="admin-section" hidden>
+          <div class="admin-section-heading">
+            <div>
+              <p class="eyebrow">Events Management</p>
+              <h2>Manage Event Calendar</h2>
+              <p class="admin-intro">
+                Create new events or remove past events. Newly created events appear instantly on the public calendar page.
+              </p>
+            </div>
+          </div>
+
+          <div class="admin-events-grid">
+            <!-- Event Creation Form -->
+            <article class="admin-card">
+              <h3>Create New Event</h3>
+              <form id="create-event-form" class="admin-form">
+                <div class="form-field">
+                  <label for="event-title">Event Title *</label>
+                  <input id="event-title" name="title" type="text" placeholder="e.g. Riftbound Tournament" required />
+                </div>
+
+                <div class="form-row">
+                  <div class="form-field">
+                    <label for="event-date">Date *</label>
+                    <input id="event-date" name="date" type="date" required />
+                  </div>
+                  <div class="form-field">
+                    <label for="event-time">Time *</label>
+                    <input id="event-time" name="time" type="time" required />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-field">
+                    <label for="event-category">Category *</label>
+                    <select id="event-category" name="category" required>
+                      <option value="Tournament">Tournament</option>
+                      <option value="Casual">Casual</option>
+                      <option value="Deck Building">Deck Building</option>
+                      <option value="Community">Community</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label for="event-format">Format / Rules</label>
+                    <input id="event-format" name="format" type="text" placeholder="e.g. Constructed, Draft" />
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label for="event-location">Location</label>
+                  <input id="event-location" name="location" type="text" placeholder="e.g. Local Game Store" />
+                </div>
+
+                <div class="form-field">
+                  <label for="event-description">Description</label>
+                  <textarea id="event-description" name="description" rows="3" placeholder="Provide event details, prizes, or requirements..."></textarea>
+                </div>
+
+                <button class="button" type="submit">Create Event</button>
+              </form>
+            </article>
+
+            <!-- Events List Table -->
+            <article class="admin-card">
+              <h3>Existing Events</h3>
+              <div id="admin-events-container" class="admin-events-list">
+                <!-- Dynamically populated by admin.js -->
+              </div>
             </article>
           </div>
         </section>
