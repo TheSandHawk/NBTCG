@@ -1,9 +1,10 @@
 const path = require("node:path");
+const fs = require("node:fs/promises");
 const crypto = require("node:crypto");
 const express = require("express");
 const mysql = require("mysql2/promise");
 const bcrypt = require("bcryptjs");
-require("dotenv").config();
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const required = ["MYSQL_HOST", "MYSQL_DATABASE", "MYSQL_USER", "MYSQL_PASSWORD", "ADMIN_USERNAME", "ADMIN_PASSWORD_HASH"];
 const missing = required.filter((name) => process.env[name] === undefined);
@@ -56,6 +57,14 @@ app.delete("/api/events/:id", requireAdmin, async (request, response, next) => {
 app.use((error, _request, response, _next) => { console.error(error); response.status(500).json({ error: "Server error." }); });
 
 async function start() {
+  try {
+    const schema = await fs.readFile(path.join(__dirname, "database", "schema.sql"), "utf8");
+    await pool.query(schema);
+    console.log("Database schema is ready.");
+  } catch (error) {
+    console.error("Database migration failed:", error.message);
+    process.exit(1);
+  }
   if (production) {
     app.use(express.static(path.join(__dirname, "dist")));
     app.use((_request, response) => response.sendFile(path.join(__dirname, "dist", "index.html")));
