@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Administration area for the Northbound TCG website."
+    />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <title>Administration | Northbound TCG</title>
+
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./admin.css" />
+  </head>
+
+  <body class="admin-page">
+    <main id="admin-login" class="admin-login">
+      <section class="login-card" aria-labelledby="login-title">
+        <a class="login-logo" href="./index.html">Northbound TCG</a>
+
+        <div class="login-heading">
+          <p class="eyebrow">Administration</p>
+          <h1 id="login-title">Sign in</h1>
+          <p>Enter your credentials to access the administration area.</p>
+        </div>
+
+        <form id="admin-login-form" class="login-form">
+          <div class="form-field">
+            <label for="username">Username</label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autocomplete="username"
+              required
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+
+          <p id="login-error" class="login-error" role="alert" hidden>
+            Username or password is incorrect.
+          </p>
+
+          <button class="button login-button" type="submit">Sign in</button>
+        </form>
+
+        <a class="login-back-link" href="./index.html">Back to website</a>
+      </section>
+    </main>
+
+    <div id="admin-app" hidden>
+      <header class="admin-header">
+        <a class="logo" href="./index.html">Northbound TCG</a>
+
+        <div class="admin-header-actions">
+          <span class="environment-badge">Admin</span>
+          <button id="admin-logout" class="admin-logout" type="button">
+            Sign out
+          </button>
+          <a class="admin-exit" href="./index.html">Back to website</a>
+        </div>
+      </header>
+
+      <div class="admin-layout">
+        <aside class="admin-sidebar" aria-label="Administration navigation">
+          <div>
+            <p class="admin-sidebar-label">Workspace</p>
+            <nav class="admin-navigation">
+              <a class="is-active" href="#overview" aria-current="page">
+                <span aria-hidden="true">⌂</span>
+                Overview
+              </a>
+              <a href="#planned">
+                <span aria-hidden="true">◇</span>
+                Planned areas
+              </a>
+            </nav>
+          </div>
+
+          <div class="admin-sidebar-note">
+            <p class="admin-sidebar-label">Signed in as</p>
+            <p>Administrator</p>
+          </div>
+        </aside>
+
+        <main class="admin-main">
+        <section id="overview" class="admin-section">
+          <div class="admin-section-heading">
+            <div>
+              <p class="eyebrow">Administration</p>
+              <h1>Welcome to your workspace.</h1>
+              <p class="admin-intro">
+                This is the foundation for future website management. New
+                settings can be added here as soon as their requirements are
+                clear.
+              </p>
+            </div>
+
+            <div class="admin-status" role="status">
+              <span class="status-dot" aria-hidden="true"></span>
+              Foundation ready
+            </div>
+          </div>
+
+          <div class="admin-summary-grid" aria-label="Administration status">
+            <article class="admin-summary-card">
+              <p class="admin-card-label">Available now</p>
+              <strong>1</strong>
+              <p>Administration workspace</p>
+            </article>
+
+            <article class="admin-summary-card">
+              <p class="admin-card-label">Configuration</p>
+              <strong>Open</strong>
+              <p>Requirements still to be defined</p>
+            </article>
+
+            <article class="admin-summary-card">
+              <p class="admin-card-label">Website</p>
+              <strong>Online</strong>
+              <p>Public pages remain unchanged</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="planned" class="admin-section">
+          <div class="admin-section-heading admin-section-heading-compact">
+            <div>
+              <p class="eyebrow">Future settings</p>
+              <h2>Planned areas</h2>
+              <p>
+                These placeholders show where future functions can live. They
+                do not change website content yet.
+              </p>
+            </div>
+          </div>
+
+          <div class="admin-module-grid">
+            <article class="admin-module">
+              <div class="admin-module-icon" aria-hidden="true">Aa</div>
+              <div>
+                <div class="admin-module-heading">
+                  <h3>Website content</h3>
+                  <span class="planned-badge">Planned</span>
+                </div>
+                <p>
+                  Manage public texts and sections once the required content
+                  model has been defined.
+                </p>
+              </div>
+            </article>
+
+            <article class="admin-module">
+              <div class="admin-module-icon" aria-hidden="true">◎</div>
+              <div>
+                <div class="admin-module-heading">
+                  <h3>Team members</h3>
+                  <span class="planned-badge">Planned</span>
+                </div>
+                <p>
+                  Add and update player profiles when profile fields and image
+                  handling are agreed.
+                </p>
+              </div>
+            </article>
+
+            <article class="admin-module">
+              <div class="admin-module-icon" aria-hidden="true">⚙</div>
+              <div>
+                <div class="admin-module-heading">
+                  <h3>General settings</h3>
+                  <span class="planned-badge">Planned</span>
+                </div>
+                <p>
+                  A flexible place for contact details, links, and other future
+                  website options.
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="admin-info" aria-labelledby="next-step-title">
+          <div class="admin-info-icon" aria-hidden="true">i</div>
+          <div>
+            <h2 id="next-step-title">Next step</h2>
+            <p>
+              Before editing functions are enabled, authentication, data
+              storage, and the first settings to manage need to be defined.
+            </p>
+          </div>
+        </section>
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="./admin.js"></script>
+  </body>
+</html>
