@@ -27,6 +27,14 @@ const isAdmin = (request) => sessions.has(cookies(request).nbtcg_session);
 const requireAdmin = (request, response, next) => isAdmin(request) ? next() : response.status(401).json({ error: "Authentication required." });
 
 app.get("/api/auth", (request, response) => response.json({ authenticated: isAdmin(request) }));
+app.get("/api/health", async (_request, response) => {
+  try {
+    const [[connection]] = await pool.query("SELECT DATABASE() AS database_name");
+    response.json({ databaseConnected: true, database: connection.database_name });
+  } catch (_error) {
+    response.status(500).json({ databaseConnected: false });
+  }
+});
 app.post("/api/auth", async (request, response) => {
   const { action, username, password } = request.body || {};
   if (action === "logout") {
