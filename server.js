@@ -58,6 +58,8 @@ app.use((error, _request, response, _next) => { console.error(error); response.s
 
 async function start() {
   try {
+    const [[connection]] = await pool.query("SELECT DATABASE() AS database_name");
+    console.log(`Connected to database: ${connection.database_name}`);
     const schema = await fs.readFile(path.join(__dirname, "database", "schema.sql"), "utf8");
     await pool.query(schema);
     console.log("Database schema is ready.");
