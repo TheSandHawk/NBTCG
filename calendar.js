@@ -1,63 +1,11 @@
-const STORAGE_KEY = "nbtcg_events";
-
-const DEFAULT_EVENTS = [
-  {
-    id: "evt-1",
-    title: "Riftbound Summer League - Day 3",
-    date: "2026-07-28",
-    time: "18:00",
-    location: "Local Game Store - Table 4",
-    category: "Tournament",
-    format: "Riftbound Constructed",
-    description: "Official local summer league matchday. Bring your 60-card main deck and sideboard! Top 4 players receive promotional foil cards."
-  },
-  {
-    id: "evt-2",
-    title: "Weekly Deck Building & Strategy Night",
-    date: "2026-08-05",
-    time: "19:00",
-    location: "Northbound Community Hub",
-    category: "Deck Building",
-    format: "All Formats",
-    description: "Brainstorming and testing new Legend archetypes and combo synergies with team members. Card trade table available."
-  },
-  {
-    id: "evt-3",
-    title: "Casual Saturday Riftbound Gathering",
-    date: "2026-08-15",
-    time: "14:00",
-    location: "Northbound Lounge",
-    category: "Casual",
-    format: "Freeplay",
-    description: "Relaxed games, deck testing without tournament pressure, and introduction rounds for new players."
-  },
-  {
-    id: "evt-4",
-    title: "Regional Riftbound Qualifier",
-    date: "2026-08-29",
-    time: "11:00",
-    location: "City Esports Center",
-    category: "Community",
-    format: "Competitive Standard",
-    description: "Competitive tournament round with prizes, trophies, and qualification points for regional finals."
-  }
-];
-
 let currentDate = new Date(); // Tracks the currently displayed month
 let activeCategory = "all";
+let events = [];
 
-export const getEvents = () => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_EVENTS));
-    return DEFAULT_EVENTS;
-  }
-  try {
-    return JSON.parse(stored);
-  } catch (e) {
-    console.error("Failed to parse events from storage:", e);
-    return DEFAULT_EVENTS;
-  }
+const loadEvents = async () => {
+  const response = await fetch("/api/events", { credentials: "same-origin" });
+  if (!response.ok) throw new Error("Events could not be loaded.");
+  events = await response.json();
 };
 
 const monthNames = [
@@ -172,7 +120,6 @@ const openModal = (eventObj) => {
 };
 
 const renderUI = () => {
-  const events = getEvents();
   renderCalendarGrid(events);
   renderEventsList(events);
 };
@@ -307,5 +254,12 @@ const renderEventsList = (events) => {
   });
 };
 
-// Initial render on page load
-renderUI();
+// Initial render after the shared database data has been loaded.
+loadEvents()
+  .then(renderUI)
+  .catch((error) => {
+    console.error(error);
+    if (eventsListContainer) {
+      eventsListContainer.innerHTML = "<div class=\"empty-state\"><p>Events are currently unavailable.</p></div>";
+    }
+  });
