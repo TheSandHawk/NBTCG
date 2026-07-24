@@ -12,7 +12,7 @@ if (menuToggle && mainNavigation) {
     const isOpen = mainNavigation.classList.toggle("is-open");
 
     menuToggle.setAttribute("aria-expanded", isOpen.toString());
-    menuToggle.textContent = isOpen ? "Schließen" : "Menü";
+    menuToggle.textContent = isOpen ? "Close" : "Menu";
 
     document.body.classList.toggle("menu-open", isOpen);
   });
@@ -26,7 +26,7 @@ navigationLinks.forEach((navigationLink) => {
 
     mainNavigation.classList.remove("is-open");
     menuToggle.setAttribute("aria-expanded", "false");
-    menuToggle.textContent = "Menü";
+    menuToggle.textContent = "Menu";
 
     document.body.classList.remove("menu-open");
   });
