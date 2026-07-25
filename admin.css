@@ -2,7 +2,7 @@
   min-height: 100vh;
 
   background:
-    radial-gradient(circle at 90% 0%, rgb(79 140 255 / 10%), transparent 28%),
+    radial-gradient(circle at 90% 0%, rgb(112 108 207 / 10%), transparent 28%),
     var(--background);
 }
 
@@ -26,7 +26,7 @@
   border-radius: 20px;
 
   background:
-    linear-gradient(145deg, rgb(30 45 66 / 92%), rgb(17 25 39 / 96%));
+    linear-gradient(145deg, rgb(48 50 84 / 92%), rgb(24 26 48 / 96%));
 
   box-shadow: 0 30px 80px rgb(0 0 0 / 35%);
 }
@@ -85,7 +85,7 @@
   border-radius: 9px;
   outline: none;
 
-  background: rgb(11 16 24 / 75%);
+  background: rgb(16 19 35 / 75%);
   color: var(--text);
 
   font: inherit;
@@ -98,7 +98,7 @@
 .form-field input:focus {
   border-color: var(--primary);
 
-  box-shadow: 0 0 0 3px rgb(79 140 255 / 16%);
+  box-shadow: 0 0 0 3px rgb(119 116 208 / 16%);
 }
 
 .login-error {
@@ -153,7 +153,7 @@
 
   border-bottom: 1px solid var(--border);
 
-  background: rgb(11 16 24 / 92%);
+  background: rgb(16 19 35 / 92%);
   backdrop-filter: blur(16px);
 }
 
@@ -179,10 +179,10 @@
 .environment-badge {
   padding: 5px 10px;
 
-  border: 1px solid rgb(79 140 255 / 35%);
+  border: 1px solid rgb(119 116 208 / 35%);
 
-  background: rgb(79 140 255 / 10%);
-  color: #9ec0ff;
+  background: rgb(119 116 208 / 10%);
+  color: #c0bce9;
 }
 
 .admin-exit {
@@ -232,14 +232,14 @@
 
   border-right: 1px solid var(--border);
 
-  background: rgb(17 25 39 / 60%);
+  background: rgb(24 26 48 / 60%);
 }
 
 .admin-sidebar-label,
 .admin-card-label {
   margin-bottom: 10px;
 
-  color: #738298;
+  color: #938fa9;
 
   font-size: 0.72rem;
   font-weight: 800;
@@ -273,9 +273,9 @@
 
 .admin-navigation a:hover,
 .admin-navigation a.is-active {
-  border-color: rgb(79 140 255 / 22%);
+  border-color: rgb(119 116 208 / 22%);
 
-  background: rgb(79 140 255 / 10%);
+  background: rgb(119 116 208 / 10%);
   color: var(--text);
 }
 
@@ -293,7 +293,7 @@
   border: 1px solid var(--border);
   border-radius: 12px;
 
-  background: rgb(22 33 49 / 70%);
+  background: rgb(34 36 64 / 70%);
 }
 
 .admin-sidebar-note p:last-child {
@@ -389,8 +389,8 @@
 
   background: linear-gradient(
     145deg,
-    rgb(30 45 66 / 85%),
-    rgb(22 33 49 / 70%)
+    rgb(48 50 84 / 85%),
+    rgb(34 36 64 / 70%)
   );
 }
 
@@ -429,7 +429,7 @@
 
   padding: 24px;
 
-  background: rgb(22 33 49 / 62%);
+  background: rgb(34 36 64 / 62%);
 
   gap: 18px;
 }
@@ -443,10 +443,10 @@
   display: grid;
   place-items: center;
 
-  border: 1px solid rgb(79 140 255 / 30%);
+  border: 1px solid rgb(119 116 208 / 30%);
 
-  background: rgb(79 140 255 / 10%);
-  color: #9ec0ff;
+  background: rgb(119 116 208 / 10%);
+  color: #c0bce9;
 
   font-weight: 900;
 }
@@ -494,10 +494,10 @@
 
   padding: 22px;
 
-  border: 1px solid rgb(79 140 255 / 30%);
+  border: 1px solid rgb(119 116 208 / 30%);
   border-radius: 14px;
 
-  background: rgb(79 140 255 / 8%);
+  background: rgb(119 116 208 / 8%);
 
   gap: 16px;
 }
@@ -651,7 +651,7 @@
   border: 1px solid var(--border);
   border-radius: 9px;
   outline: none;
-  background: rgb(11 16 24 / 75%);
+  background: rgb(16 19 35 / 75%);
   color: var(--text);
   font: inherit;
   transition: border-color 160ms ease, box-shadow 160ms ease;
@@ -660,7 +660,7 @@
 .form-field select:focus,
 .form-field textarea:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgb(79 140 255 / 16%);
+  box-shadow: 0 0 0 3px rgb(119 116 208 / 16%);
 }
 
 .admin-events-list {
