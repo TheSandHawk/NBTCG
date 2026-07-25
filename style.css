@@ -613,12 +613,13 @@ p {
   background: var(--surface);
   border-radius: 16px;
   border: 1px solid var(--border);
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .calendar-weekdays {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(140px, 1fr));
+  min-width: 980px;
   background: var(--surface-light);
   border-bottom: 1px solid var(--border);
   text-align: center;
@@ -631,7 +632,8 @@ p {
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(140px, 1fr));
+  min-width: 980px;
   grid-auto-rows: minmax(100px, auto);
 }
 
@@ -723,6 +725,7 @@ p {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Category Colors */
