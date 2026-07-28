@@ -31,6 +31,7 @@ function cookies(request) {
 const currentUser = (request) => sessions.get(cookies(request).nbtcg_session);
 const requireRole = (...roles) => (request, response, next) => {
   const user = currentUser(request);
+  if (user?.mustChangePassword) return response.status(403).json({ error: "You must change your password before continuing." });
   return user && roles.includes(user.role) ? next() : response.status(403).json({ error: "You do not have permission for this action." });
 };
 const requireAdmin = requireRole("admin");
@@ -59,7 +60,7 @@ const validImageFile = async (file) => {
 
 app.get("/api/auth", (request, response) => {
   const user = currentUser(request);
-  response.json(user ? { authenticated: true, username: user.username, role: user.role } : { authenticated: false });
+  response.json(user ? { authenticated: true, username: user.username, role: user.role, mustChangePassword: user.mustChangePassword } : { authenticated: false });
 });
 app.get("/api/health", async (_request, response) => {
   try {
@@ -76,49 +77,62 @@ app.post("/api/auth", async (request, response) => {
     response.clearCookie("nbtcg_session");
     return response.json({ authenticated: false });
   }
+  if (action === "change-password") {
+    const user = currentUser(request);
+    const newPassword = String(request.body.newPassword || "");
+    if (!user) return response.status(401).json({ error: "Authentication required." });
+    if (newPassword.length < 10) return response.status(422).json({ error: "The new password must have at least 10 characters." });
+    try {
+      const passwordHash = await bcrypt.hash(newPassword, 12);
+      await pool.execute("UPDATE admin_users SET password_hash = ?, must_change_password = 0 WHERE id = ?", [passwordHash, user.id]);
+      user.mustChangePassword = false;
+      return response.json({ authenticated: true, username: user.username, role: user.role, mustChangePassword: false });
+    } catch (_error) { return response.status(500).json({ error: "Unable to update password." }); }
+  }
   if (action !== "login") return response.status(400).json({ error: "Invalid action." });
-  const [[user]] = await pool.execute("SELECT id, username, password_hash, role FROM admin_users WHERE username = ?", [String(username || "").trim()]);
+  const [[user]] = await pool.execute("SELECT id, username, password_hash, role, must_change_password AS mustChangePassword FROM admin_users WHERE username = ?", [String(username || "").trim()]);
   const valid = user && await bcrypt.compare(String(password || ""), user.password_hash);
   if (!valid) return response.status(401).json({ error: "Invalid credentials." });
   const token = crypto.randomBytes(32).toString("hex");
-  sessions.set(token, { id: user.id, username: user.username, role: user.role });
+  sessions.set(token, { id: user.id, username: user.username, role: user.role, mustChangePassword: Boolean(user.mustChangePassword) });
   response.cookie("nbtcg_session", token, { httpOnly: true, sameSite: "lax", secure: process.env.SESSION_COOKIE_SECURE === "true", maxAge: 43200000 });
-  return response.json({ authenticated: true, username: user.username, role: user.role });
+  return response.json({ authenticated: true, username: user.username, role: user.role, mustChangePassword: Boolean(user.mustChangePassword) });
 });
 const validUsername = (value) => /^[a-zA-Z0-9._-]{3,80}$/.test(String(value || "").trim());
 const validRole = (value) => ["admin", "editor", "team_manager", "event_manager"].includes(value);
 app.get("/api/users", requireAdmin, async (_request, response, next) => {
-  try { const [users] = await pool.query("SELECT id, username, role, created_at AS createdAt FROM admin_users ORDER BY username"); response.json(users); } catch (error) { next(error); }
+  try { const [users] = await pool.query("SELECT id, username, role, must_change_password AS mustChangePassword, is_protected AS isProtected, created_at AS createdAt FROM admin_users ORDER BY username"); response.json(users); } catch (error) { next(error); }
 });
 app.post("/api/users", requireAdmin, async (request, response, next) => {
-  const { username, password, role } = request.body || {};
+  const { username, password, role, mustChangePassword } = request.body || {};
   if (!validUsername(username) || String(password || "").length < 10 || !validRole(role)) return response.status(422).json({ error: "Use a valid username, a password with at least 10 characters, and a role." });
   try {
     const passwordHash = await bcrypt.hash(password, 12);
-    const [result] = await pool.execute("INSERT INTO admin_users (username, password_hash, role) VALUES (?, ?, ?)", [String(username).trim(), passwordHash, role]);
+    const [result] = await pool.execute("INSERT INTO admin_users (username, password_hash, role, must_change_password) VALUES (?, ?, ?, ?)", [String(username).trim(), passwordHash, role, Boolean(mustChangePassword)]);
     response.status(201).json({ id: result.insertId });
   } catch (error) { next(error); }
 });
 app.put("/api/users/:id", requireAdmin, async (request, response, next) => {
-  const { username, password, role } = request.body || {};
+  const { username, password, role, mustChangePassword } = request.body || {};
   if (!validUsername(username) || !validRole(role) || (password && String(password).length < 10)) return response.status(422).json({ error: "Use a valid username, an optional password with at least 10 characters, and a role." });
   try {
-    const [[target]] = await pool.execute("SELECT id, role FROM admin_users WHERE id = ?", [request.params.id]);
+    const [[target]] = await pool.execute("SELECT id, role, is_protected AS isProtected FROM admin_users WHERE id = ?", [request.params.id]);
     if (!target) return response.status(404).json({ error: "User not found." });
     if (target.role === "admin" && role !== "admin") {
       const [[admins]] = await pool.query("SELECT COUNT(*) AS count FROM admin_users WHERE role = 'admin'");
       if (admins.count <= 1) return response.status(422).json({ error: "At least one administrator must remain." });
     }
     const passwordHash = password ? await bcrypt.hash(password, 12) : null;
-    await pool.execute("UPDATE admin_users SET username = ?, role = ?, password_hash = COALESCE(?, password_hash) WHERE id = ?", [String(username).trim(), role, passwordHash, request.params.id]);
+    await pool.execute("UPDATE admin_users SET username = ?, role = ?, password_hash = COALESCE(?, password_hash), must_change_password = ? WHERE id = ?", [String(username).trim(), role, passwordHash, Boolean(mustChangePassword), request.params.id]);
     response.json({ updated: true });
   } catch (error) { next(error); }
 });
 app.delete("/api/users/:id", requireAdmin, async (request, response, next) => {
   if (Number(request.params.id) === currentUser(request).id) return response.status(422).json({ error: "You cannot delete your own account." });
   try {
-    const [[target]] = await pool.execute("SELECT id, role FROM admin_users WHERE id = ?", [request.params.id]);
+    const [[target]] = await pool.execute("SELECT id, role, is_protected AS isProtected FROM admin_users WHERE id = ?", [request.params.id]);
     if (!target) return response.json({ deleted: false });
+    if (target.isProtected) return response.status(422).json({ error: "The primary administrator account cannot be deleted." });
     if (target.role === "admin") {
       const [[admins]] = await pool.query("SELECT COUNT(*) AS count FROM admin_users WHERE role = 'admin'");
       if (admins.count <= 1) return response.status(422).json({ error: "At least one administrator must remain." });

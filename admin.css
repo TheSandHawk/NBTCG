@@ -671,10 +671,33 @@
   overflow-y: auto;
 }
 
+.login-back-button {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
 .admin-form-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.admin-checkbox {
+  display: flex;
+  align-items: center;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  gap: 10px;
+}
+
+.admin-checkbox input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--primary);
 }
 
 .admin-team-member-actions {

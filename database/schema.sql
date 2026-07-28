@@ -31,6 +31,8 @@ CREATE TABLE IF NOT EXISTS admin_users (
   username VARCHAR(80) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('admin', 'editor', 'team_manager', 'event_manager') NOT NULL DEFAULT 'editor',
+  must_change_password TINYINT(1) NOT NULL DEFAULT 0,
+  is_protected TINYINT(1) NOT NULL DEFAULT 0,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY admin_users_username (username)

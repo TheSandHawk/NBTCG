@@ -60,6 +60,24 @@
       </section>
     </main>
 
+    <main id="admin-password-change" class="admin-login" hidden>
+      <section class="login-card" aria-labelledby="password-change-title">
+        <a class="login-logo" href="./index.html">Northbound TCG</a>
+        <div class="login-heading">
+          <p class="eyebrow">Security</p>
+          <h1 id="password-change-title">Set a new password</h1>
+          <p>Your administrator has requested that you change your password before continuing.</p>
+        </div>
+        <form id="password-change-form" class="login-form">
+          <div class="form-field"><label for="new-password">New password</label><input id="new-password" name="newPassword" type="password" minlength="10" autocomplete="new-password" required /></div>
+          <div class="form-field"><label for="confirm-password">Confirm new password</label><input id="confirm-password" type="password" minlength="10" autocomplete="new-password" required /></div>
+          <p id="password-change-error" class="login-error" role="alert" hidden></p>
+          <button class="button login-button" type="submit">Save new password</button>
+        </form>
+        <button id="password-change-logout" class="login-back-link login-back-button" type="button">Sign out</button>
+      </section>
+    </main>
+
     <div id="admin-app" hidden>
       <header class="admin-header">
         <a class="logo" href="./index.html">Northbound TCG</a>
@@ -263,6 +281,7 @@
                 <div class="form-field"><label for="user-username">Username *</label><input id="user-username" name="username" type="text" minlength="3" maxlength="80" required /></div>
                 <div class="form-field"><label for="user-password">Password *</label><input id="user-password" name="password" type="password" minlength="10" autocomplete="new-password" required /><small>At least 10 characters. Leave empty when editing to keep the current password.</small></div>
                 <div class="form-field"><label for="user-role">Role *</label><select id="user-role" name="role" required><option value="editor">Editor — events and team</option><option value="team_manager">Team Manager — team and images</option><option value="event_manager">Event Manager — events only</option><option value="admin">Administrator — full access</option></select></div>
+                <label class="admin-checkbox"><input id="user-must-change-password" name="mustChangePassword" type="checkbox" checked /> Require a password change at the next login</label>
                 <div class="admin-form-actions"><button id="user-submit" class="button" type="submit">Add user</button><button id="user-cancel" class="button button-secondary" type="button" hidden>Cancel</button></div>
               </form>
             </article>

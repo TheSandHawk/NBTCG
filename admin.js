@@ -1,9 +1,13 @@
 const loginView = document.querySelector("#admin-login");
+const passwordChangeView = document.querySelector("#admin-password-change");
 const adminApp = document.querySelector("#admin-app");
 const loginForm = document.querySelector("#admin-login-form");
 const usernameInput = document.querySelector("#username");
 const passwordInput = document.querySelector("#password");
 const loginError = document.querySelector("#login-error");
+const passwordChangeForm = document.querySelector("#password-change-form");
+const passwordChangeError = document.querySelector("#password-change-error");
+const passwordChangeLogout = document.querySelector("#password-change-logout");
 const logoutButton = document.querySelector("#admin-logout");
 const navigationLinks = document.querySelectorAll(".admin-navigation a");
 const adminSections = document.querySelectorAll(".admin-section");
@@ -54,6 +58,7 @@ const request = async (url, options = {}) => {
 const showAdmin = (session) => {
   currentUserRole = session.role;
   loginView.hidden = true;
+  passwordChangeView.hidden = true;
   adminApp.hidden = false;
   document.title = "Administration | Northbound TCG";
   usersNavigation.hidden = currentUserRole !== "admin";
@@ -63,6 +68,15 @@ const showAdmin = (session) => {
   renderTeamMembersList();
   renderOverview();
   if (currentUserRole === "admin") renderUsersList();
+};
+
+const showPasswordChange = () => {
+  loginView.hidden = true;
+  adminApp.hidden = true;
+  passwordChangeView.hidden = false;
+  passwordChangeForm.reset();
+  passwordChangeError.hidden = true;
+  passwordChangeForm.elements.newPassword.focus();
 };
 
 const roleDetails = {
@@ -102,6 +116,7 @@ const resetUserForm = () => {
   if (!userForm) return;
   editingUserId = null;
   userForm.reset();
+  userForm.elements.mustChangePassword.checked = true;
   userForm.elements.password.required = true;
   userForm.elements.password.placeholder = "";
   userFormTitle.textContent = "Add user";
@@ -130,7 +145,7 @@ const renderUsersList = async () => {
         team_manager: "Team Manager — team and images",
         event_manager: "Event Manager — events only",
       };
-      meta.textContent = roleLabels[user.role] || user.role;
+      meta.textContent = `${roleLabels[user.role] || user.role}${user.isProtected ? " · Primary administrator" : ""}${user.mustChangePassword ? " · Password change required" : ""}`;
       info.append(name, meta);
       const actions = document.createElement("div");
       actions.className = "admin-team-member-actions";
@@ -145,20 +160,24 @@ const renderUsersList = async () => {
         userForm.elements.password.required = false;
         userForm.elements.password.placeholder = "Leave empty to keep unchanged";
         userForm.elements.role.value = user.role;
+        userForm.elements.mustChangePassword.checked = Boolean(user.mustChangePassword);
         userFormTitle.textContent = "Edit user";
         userSubmit.textContent = "Save changes";
         userCancel.hidden = false;
         userForm.elements.username.focus();
       });
-      const remove = document.createElement("button");
-      remove.className = "button button-small button-danger";
-      remove.type = "button";
-      remove.textContent = "Delete";
-      remove.addEventListener("click", async () => {
-        if (!confirm(`Delete ${user.username}?`)) return;
-        try { await request(`/api/users/${encodeURIComponent(user.id)}`, { method: "DELETE" }); renderUsersList(); } catch (error) { alert(error.message); }
-      });
-      actions.append(edit, remove);
+      actions.append(edit);
+      if (!user.isProtected) {
+        const remove = document.createElement("button");
+        remove.className = "button button-small button-danger";
+        remove.type = "button";
+        remove.textContent = "Delete";
+        remove.addEventListener("click", async () => {
+          if (!confirm(`Delete ${user.username}?`)) return;
+          try { await request(`/api/users/${encodeURIComponent(user.id)}`, { method: "DELETE" }); renderUsersList(); } catch (error) { alert(error.message); }
+        });
+        actions.append(remove);
+      }
       item.append(info, actions);
       usersContainer.append(item);
     });
@@ -237,6 +256,7 @@ const renderTeamMembersList = async () => {
 
 const showLogin = () => {
   adminApp.hidden = true;
+  passwordChangeView.hidden = true;
   loginView.hidden = false;
   loginForm.reset();
   loginError.hidden = true;
@@ -291,12 +311,35 @@ loginForm.addEventListener("submit", async (event) => {
       method: "POST",
       body: JSON.stringify({ action: "login", username: usernameInput.value, password: passwordInput.value }),
     });
-    showAdmin(session);
+    session.mustChangePassword ? showPasswordChange() : showAdmin(session);
   } catch (_) {
     loginError.hidden = false;
     passwordInput.value = "";
     passwordInput.focus();
   }
+});
+
+passwordChangeForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const newPassword = passwordChangeForm.elements.newPassword.value;
+  const confirmation = document.querySelector("#confirm-password").value;
+  if (newPassword !== confirmation) {
+    passwordChangeError.textContent = "The new passwords do not match.";
+    passwordChangeError.hidden = false;
+    return;
+  }
+  try {
+    const session = await request("/api/auth", { method: "POST", body: JSON.stringify({ action: "change-password", newPassword }) });
+    showAdmin(session);
+  } catch (error) {
+    passwordChangeError.textContent = error.message;
+    passwordChangeError.hidden = false;
+  }
+});
+
+passwordChangeLogout?.addEventListener("click", async () => {
+  await request("/api/auth", { method: "POST", body: JSON.stringify({ action: "logout" }) }).catch(() => {});
+  showLogin();
 });
 
 logoutButton.addEventListener("click", async () => {
@@ -356,5 +399,5 @@ userForm?.addEventListener("submit", async (event) => {
 userCancel?.addEventListener("click", resetUserForm);
 
 request("/api/auth")
-  .then((session) => session.authenticated ? showAdmin(session) : showLogin())
+  .then((session) => session.authenticated ? (session.mustChangePassword ? showPasswordChange() : showAdmin(session)) : showLogin())
   .catch(showLogin);
