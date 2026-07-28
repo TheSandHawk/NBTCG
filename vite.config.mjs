@@ -8,6 +8,7 @@ export default defineConfig({
         main: resolve(import.meta.dirname, "index.html"),
         admin: resolve(import.meta.dirname, "admin.html"),
         calendar: resolve(import.meta.dirname, "calendar.html"),
+        team: resolve(import.meta.dirname, "team.html"),
       },
     },
   },
