@@ -1,5 +1,7 @@
 node_modules/
 dist/
+uploads/team/*
+!uploads/team/.gitkeep
 .env
 .env.*
 !.env.example

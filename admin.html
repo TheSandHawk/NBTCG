@@ -86,6 +86,10 @@
                 <span aria-hidden="true">📅</span>
                 Events
               </a>
+              <a href="#team-members">
+                <span aria-hidden="true">&#128101;</span>
+                Team members
+              </a>
               <a href="#planned">
                 <span aria-hidden="true">◇</span>
                 Planned areas
@@ -208,6 +212,35 @@
               <div id="admin-events-container" class="admin-events-list">
                 <!-- Dynamically populated by admin.js -->
               </div>
+            </article>
+          </div>
+        </section>
+
+        <section id="team-members" class="admin-section" hidden>
+          <div class="admin-section-heading">
+            <div>
+              <p class="eyebrow">Team management</p>
+              <h2>Manage team members</h2>
+              <p class="admin-intro">Add, edit, reorder, or remove the profiles shown on the public team page.</p>
+            </div>
+          </div>
+          <div class="admin-events-grid">
+            <article class="admin-card">
+              <h3 id="team-member-form-title">Add team member</h3>
+              <form id="team-member-form" class="admin-form">
+                <div class="form-field"><label for="member-name">Name *</label><input id="member-name" name="name" type="text" maxlength="80" required /></div>
+                <div class="form-field"><label for="member-role">Role *</label><input id="member-role" name="role" type="text" maxlength="80" placeholder="e.g. Team member" required /></div>
+                <div class="form-field"><label for="member-image-url">Profile image URL</label><input id="member-image-url" name="imageUrl" type="url" maxlength="2048" placeholder="https://example.com/profile.jpg" /></div>
+                <div class="form-field"><label for="member-image">Or upload a profile image</label><input id="member-image" name="image" type="file" accept="image/jpeg,image/png,image/webp" /><small>JPG, PNG or WebP, up to 5 MB.</small></div>
+                <div class="form-field"><label for="member-instagram-url">Instagram link</label><input id="member-instagram-url" name="instagramUrl" type="url" maxlength="2048" placeholder="https://www.instagram.com/profile/" /></div>
+                <div class="form-field"><label for="member-order">Display order *</label><input id="member-order" name="sortOrder" type="number" min="0" step="1" value="0" required /></div>
+                <div class="form-field"><label for="member-bio">Description *</label><textarea id="member-bio" name="bio" rows="6" maxlength="2000" required></textarea></div>
+                <div class="admin-form-actions"><button id="team-member-submit" class="button" type="submit">Add member</button><button id="team-member-cancel" class="button button-secondary" type="button" hidden>Cancel</button></div>
+              </form>
+            </article>
+            <article class="admin-card">
+              <h3>Existing team members</h3>
+              <div id="admin-team-members-container" class="admin-events-list"></div>
             </article>
           </div>
         </section>

@@ -671,6 +671,18 @@
   overflow-y: auto;
 }
 
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-team-member-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
 .admin-event-item {
   display: flex;
   align-items: center;
