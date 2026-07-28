@@ -1,6 +1,7 @@
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const mysql = require("mysql2/promise");
+const { ensureTeamMembers } = require("../database/team-members");
 require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
 
 const required = ["MYSQL_HOST", "MYSQL_DATABASE", "MYSQL_USER", "MYSQL_PASSWORD"];
@@ -18,6 +19,7 @@ async function migrate() {
     multipleStatements: true,
   });
   await connection.query(schema);
+  await ensureTeamMembers(connection);
   await connection.end();
   console.log("Database schema is ready.");
 }

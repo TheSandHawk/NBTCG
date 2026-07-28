@@ -5,6 +5,7 @@ const express = require("express");
 const mysql = require("mysql2/promise");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
+const { ensureTeamMembers } = require("./database/team-members");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const required = ["MYSQL_HOST", "MYSQL_DATABASE", "MYSQL_USER", "MYSQL_PASSWORD", "ADMIN_USERNAME", "ADMIN_PASSWORD_HASH"];
@@ -142,6 +143,7 @@ async function start() {
     console.log(`Connected to database: ${connection.database_name}`);
     const schema = await fs.readFile(path.join(__dirname, "database", "schema.sql"), "utf8");
     await pool.query(schema);
+    await ensureTeamMembers(pool);
     console.log("Database schema is ready.");
   } catch (error) {
     console.error("Database migration failed:", error.message);
