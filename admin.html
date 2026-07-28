@@ -82,15 +82,19 @@
                 <span aria-hidden="true">⌂</span>
                 Overview
               </a>
-              <a href="#events">
+              <a id="events-navigation" href="#events">
                 <span aria-hidden="true">📅</span>
                 Events
               </a>
-              <a href="#team-members">
+              <a id="team-members-navigation" href="#team-members">
                 <span aria-hidden="true">&#128101;</span>
                 Team members
               </a>
-              <a href="#planned">
+              <a id="users-navigation" href="#users">
+                <span aria-hidden="true">&#128100;</span>
+                Users
+              </a>
+              <a href="#planned" hidden>
                 <span aria-hidden="true">◇</span>
                 Planned areas
               </a>
@@ -108,37 +112,36 @@
           <div class="admin-section-heading">
             <div>
               <p class="eyebrow">Administration</p>
-              <h1>Welcome to your workspace.</h1>
+              <h1>Your workspace at a glance.</h1>
               <p class="admin-intro">
-                This is the foundation for future website management. New
-                settings can be added here as soon as their requirements are
-                clear.
+                Manage the content you have access to and keep track of your
+                Northbound TCG website.
               </p>
             </div>
 
             <div class="admin-status" role="status">
               <span class="status-dot" aria-hidden="true"></span>
-              Foundation ready
+              <span id="overview-status">Ready</span>
             </div>
           </div>
 
-          <div class="admin-summary-grid" aria-label="Administration status">
+          <div class="admin-summary-grid" aria-label="Website overview">
             <article class="admin-summary-card">
-              <p class="admin-card-label">Available now</p>
-              <strong>1</strong>
-              <p>Administration workspace</p>
+              <p class="admin-card-label">Team members</p>
+              <strong id="overview-team-count">—</strong>
+              <p>Profiles displayed on the public team page</p>
             </article>
 
             <article class="admin-summary-card">
-              <p class="admin-card-label">Configuration</p>
-              <strong>Open</strong>
-              <p>Requirements still to be defined</p>
+              <p class="admin-card-label">Upcoming events</p>
+              <strong id="overview-event-count">—</strong>
+              <p>Events scheduled from today onwards</p>
             </article>
 
             <article class="admin-summary-card">
-              <p class="admin-card-label">Website</p>
-              <strong>Online</strong>
-              <p>Public pages remain unchanged</p>
+              <p id="overview-access-label" class="admin-card-label">Your access</p>
+              <strong id="overview-access-value">—</strong>
+              <p id="overview-access-description">Loading your permissions…</p>
             </article>
           </div>
         </section>
@@ -245,7 +248,32 @@
           </div>
         </section>
 
-        <section id="planned" class="admin-section">
+        <section id="users" class="admin-section" hidden>
+          <div class="admin-section-heading">
+            <div>
+              <p class="eyebrow">Access management</p>
+              <h2>Manage users</h2>
+              <p class="admin-intro">Administrators can manage all areas. Editors can manage events and team members, while managers are restricted to their respective area.</p>
+            </div>
+          </div>
+          <div class="admin-events-grid">
+            <article class="admin-card">
+              <h3 id="user-form-title">Add user</h3>
+              <form id="user-form" class="admin-form">
+                <div class="form-field"><label for="user-username">Username *</label><input id="user-username" name="username" type="text" minlength="3" maxlength="80" required /></div>
+                <div class="form-field"><label for="user-password">Password *</label><input id="user-password" name="password" type="password" minlength="10" autocomplete="new-password" required /><small>At least 10 characters. Leave empty when editing to keep the current password.</small></div>
+                <div class="form-field"><label for="user-role">Role *</label><select id="user-role" name="role" required><option value="editor">Editor — events and team</option><option value="team_manager">Team Manager — team and images</option><option value="event_manager">Event Manager — events only</option><option value="admin">Administrator — full access</option></select></div>
+                <div class="admin-form-actions"><button id="user-submit" class="button" type="submit">Add user</button><button id="user-cancel" class="button button-secondary" type="button" hidden>Cancel</button></div>
+              </form>
+            </article>
+            <article class="admin-card">
+              <h3>Existing users</h3>
+              <div id="admin-users-container" class="admin-events-list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section id="planned" class="admin-section" hidden>
           <div class="admin-section-heading admin-section-heading-compact">
             <div>
               <p class="eyebrow">Future settings</p>
@@ -302,7 +330,7 @@
           </div>
         </section>
 
-        <section class="admin-info" aria-labelledby="next-step-title">
+        <section class="admin-info" aria-labelledby="next-step-title" hidden>
           <div class="admin-info-icon" aria-hidden="true">i</div>
           <div>
             <h2 id="next-step-title">Next step</h2>

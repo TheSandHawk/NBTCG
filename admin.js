@@ -15,6 +15,21 @@ const teamMemberFormTitle = document.querySelector("#team-member-form-title");
 const teamMemberSubmit = document.querySelector("#team-member-submit");
 const teamMemberCancel = document.querySelector("#team-member-cancel");
 const teamMemberImage = document.querySelector("#member-image");
+const usersNavigation = document.querySelector("#users-navigation");
+const eventsNavigation = document.querySelector("#events-navigation");
+const teamMembersNavigation = document.querySelector("#team-members-navigation");
+const userForm = document.querySelector("#user-form");
+const usersContainer = document.querySelector("#admin-users-container");
+const userFormTitle = document.querySelector("#user-form-title");
+const userSubmit = document.querySelector("#user-submit");
+const userCancel = document.querySelector("#user-cancel");
+const overviewTeamCount = document.querySelector("#overview-team-count");
+const overviewEventCount = document.querySelector("#overview-event-count");
+const overviewAccessLabel = document.querySelector("#overview-access-label");
+const overviewAccessValue = document.querySelector("#overview-access-value");
+const overviewAccessDescription = document.querySelector("#overview-access-description");
+let currentUserRole = null;
+let editingUserId = null;
 let editingMemberId = null;
 
 const request = async (url, options = {}) => {
@@ -36,12 +51,41 @@ const request = async (url, options = {}) => {
   return data;
 };
 
-const showAdmin = () => {
+const showAdmin = (session) => {
+  currentUserRole = session.role;
   loginView.hidden = true;
   adminApp.hidden = false;
   document.title = "Administration | Northbound TCG";
+  usersNavigation.hidden = currentUserRole !== "admin";
+  eventsNavigation.hidden = !["admin", "editor", "event_manager"].includes(currentUserRole);
+  teamMembersNavigation.hidden = !["admin", "editor", "team_manager"].includes(currentUserRole);
   renderAdminEventsList();
   renderTeamMembersList();
+  renderOverview();
+  if (currentUserRole === "admin") renderUsersList();
+};
+
+const roleDetails = {
+  admin: { name: "Administrator", description: "Full access, including user management." },
+  editor: { name: "Editor", description: "Can manage events, team members, and images." },
+  team_manager: { name: "Team Manager", description: "Can manage team members and profile images." },
+  event_manager: { name: "Event Manager", description: "Can manage events only." },
+};
+
+const renderOverview = async () => {
+  const access = roleDetails[currentUserRole] || { name: "Limited", description: "Your available permissions are limited." };
+  overviewAccessValue.textContent = access.name;
+  overviewAccessDescription.textContent = access.description;
+  if (currentUserRole === "admin") overviewAccessLabel.textContent = "Your access";
+  try {
+    const [members, events] = await Promise.all([request("/api/team-members"), request("/api/events")]);
+    overviewTeamCount.textContent = members.length.toString();
+    const today = new Date().toISOString().slice(0, 10);
+    overviewEventCount.textContent = events.filter((event) => event.date >= today).length.toString();
+  } catch (_) {
+    overviewTeamCount.textContent = "—";
+    overviewEventCount.textContent = "—";
+  }
 };
 
 const resetTeamMemberForm = () => {
@@ -52,6 +96,73 @@ const resetTeamMemberForm = () => {
   teamMemberFormTitle.textContent = "Add team member";
   teamMemberSubmit.textContent = "Add member";
   teamMemberCancel.hidden = true;
+};
+
+const resetUserForm = () => {
+  if (!userForm) return;
+  editingUserId = null;
+  userForm.reset();
+  userForm.elements.password.required = true;
+  userForm.elements.password.placeholder = "";
+  userFormTitle.textContent = "Add user";
+  userSubmit.textContent = "Add user";
+  userCancel.hidden = true;
+};
+
+const renderUsersList = async () => {
+  if (!usersContainer || currentUserRole !== "admin") return;
+  try {
+    const users = await request("/api/users");
+    usersContainer.replaceChildren();
+    users.forEach((user) => {
+      const item = document.createElement("div");
+      item.className = "admin-event-item";
+      const info = document.createElement("div");
+      info.className = "admin-event-info";
+      const name = document.createElement("strong");
+      name.className = "admin-event-title";
+      name.textContent = user.username;
+      const meta = document.createElement("p");
+      meta.className = "admin-event-meta";
+      const roleLabels = {
+        admin: "Administrator — full access",
+        editor: "Editor — events and team",
+        team_manager: "Team Manager — team and images",
+        event_manager: "Event Manager — events only",
+      };
+      meta.textContent = roleLabels[user.role] || user.role;
+      info.append(name, meta);
+      const actions = document.createElement("div");
+      actions.className = "admin-team-member-actions";
+      const edit = document.createElement("button");
+      edit.className = "button button-small";
+      edit.type = "button";
+      edit.textContent = "Edit";
+      edit.addEventListener("click", () => {
+        editingUserId = user.id;
+        userForm.elements.username.value = user.username;
+        userForm.elements.password.value = "";
+        userForm.elements.password.required = false;
+        userForm.elements.password.placeholder = "Leave empty to keep unchanged";
+        userForm.elements.role.value = user.role;
+        userFormTitle.textContent = "Edit user";
+        userSubmit.textContent = "Save changes";
+        userCancel.hidden = false;
+        userForm.elements.username.focus();
+      });
+      const remove = document.createElement("button");
+      remove.className = "button button-small button-danger";
+      remove.type = "button";
+      remove.textContent = "Delete";
+      remove.addEventListener("click", async () => {
+        if (!confirm(`Delete ${user.username}?`)) return;
+        try { await request(`/api/users/${encodeURIComponent(user.id)}`, { method: "DELETE" }); renderUsersList(); } catch (error) { alert(error.message); }
+      });
+      actions.append(edit, remove);
+      item.append(info, actions);
+      usersContainer.append(item);
+    });
+  } catch (error) { usersContainer.textContent = error.message; }
 };
 
 const uploadTeamImage = async (file) => {
@@ -176,11 +287,11 @@ const renderAdminEventsList = async () => {
 loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   try {
-    await request("/api/auth", {
+    const session = await request("/api/auth", {
       method: "POST",
       body: JSON.stringify({ action: "login", username: usernameInput.value, password: passwordInput.value }),
     });
-    showAdmin();
+    showAdmin(session);
   } catch (_) {
     loginError.hidden = false;
     passwordInput.value = "";
@@ -229,6 +340,21 @@ teamMemberForm?.addEventListener("submit", async (event) => {
 
 teamMemberCancel?.addEventListener("click", resetTeamMemberForm);
 
+userForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const user = Object.fromEntries(new FormData(userForm).entries());
+  try {
+    await request(editingUserId ? `/api/users/${encodeURIComponent(editingUserId)}` : "/api/users", {
+      method: editingUserId ? "PUT" : "POST",
+      body: JSON.stringify(user),
+    });
+    resetUserForm();
+    renderUsersList();
+  } catch (error) { alert(error.message); }
+});
+
+userCancel?.addEventListener("click", resetUserForm);
+
 request("/api/auth")
-  .then((session) => session.authenticated ? showAdmin() : showLogin())
+  .then((session) => session.authenticated ? showAdmin(session) : showLogin())
   .catch(showLogin);

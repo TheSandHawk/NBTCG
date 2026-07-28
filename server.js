@@ -6,6 +6,7 @@ const mysql = require("mysql2/promise");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const { ensureTeamMembers } = require("./database/team-members");
+const { ensureAdminUsers } = require("./database/admin-users");
 require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const required = ["MYSQL_HOST", "MYSQL_DATABASE", "MYSQL_USER", "MYSQL_PASSWORD", "ADMIN_USERNAME", "ADMIN_PASSWORD_HASH"];
@@ -27,8 +28,14 @@ function cookies(request) {
     return [part.slice(0, index).trim(), decodeURIComponent(part.slice(index + 1))];
   }));
 }
-const isAdmin = (request) => sessions.has(cookies(request).nbtcg_session);
-const requireAdmin = (request, response, next) => isAdmin(request) ? next() : response.status(401).json({ error: "Authentication required." });
+const currentUser = (request) => sessions.get(cookies(request).nbtcg_session);
+const requireRole = (...roles) => (request, response, next) => {
+  const user = currentUser(request);
+  return user && roles.includes(user.role) ? next() : response.status(403).json({ error: "You do not have permission for this action." });
+};
+const requireAdmin = requireRole("admin");
+const requireTeamManager = requireRole("admin", "editor", "team_manager");
+const requireEventManager = requireRole("admin", "editor", "event_manager");
 const upload = multer({
   storage: multer.diskStorage({
     destination: (_request, _file, callback) => callback(null, uploadDirectory),
@@ -50,7 +57,10 @@ const validImageFile = async (file) => {
   return isJpeg || isPng || isWebp;
 };
 
-app.get("/api/auth", (request, response) => response.json({ authenticated: isAdmin(request) }));
+app.get("/api/auth", (request, response) => {
+  const user = currentUser(request);
+  response.json(user ? { authenticated: true, username: user.username, role: user.role } : { authenticated: false });
+});
 app.get("/api/health", async (_request, response) => {
   try {
     const [[connection]] = await pool.query("SELECT DATABASE() AS database_name");
@@ -67,12 +77,55 @@ app.post("/api/auth", async (request, response) => {
     return response.json({ authenticated: false });
   }
   if (action !== "login") return response.status(400).json({ error: "Invalid action." });
-  const valid = username === process.env.ADMIN_USERNAME && await bcrypt.compare(String(password || ""), process.env.ADMIN_PASSWORD_HASH);
+  const [[user]] = await pool.execute("SELECT id, username, password_hash, role FROM admin_users WHERE username = ?", [String(username || "").trim()]);
+  const valid = user && await bcrypt.compare(String(password || ""), user.password_hash);
   if (!valid) return response.status(401).json({ error: "Invalid credentials." });
   const token = crypto.randomBytes(32).toString("hex");
-  sessions.set(token, true);
+  sessions.set(token, { id: user.id, username: user.username, role: user.role });
   response.cookie("nbtcg_session", token, { httpOnly: true, sameSite: "lax", secure: process.env.SESSION_COOKIE_SECURE === "true", maxAge: 43200000 });
-  return response.json({ authenticated: true });
+  return response.json({ authenticated: true, username: user.username, role: user.role });
+});
+const validUsername = (value) => /^[a-zA-Z0-9._-]{3,80}$/.test(String(value || "").trim());
+const validRole = (value) => ["admin", "editor", "team_manager", "event_manager"].includes(value);
+app.get("/api/users", requireAdmin, async (_request, response, next) => {
+  try { const [users] = await pool.query("SELECT id, username, role, created_at AS createdAt FROM admin_users ORDER BY username"); response.json(users); } catch (error) { next(error); }
+});
+app.post("/api/users", requireAdmin, async (request, response, next) => {
+  const { username, password, role } = request.body || {};
+  if (!validUsername(username) || String(password || "").length < 10 || !validRole(role)) return response.status(422).json({ error: "Use a valid username, a password with at least 10 characters, and a role." });
+  try {
+    const passwordHash = await bcrypt.hash(password, 12);
+    const [result] = await pool.execute("INSERT INTO admin_users (username, password_hash, role) VALUES (?, ?, ?)", [String(username).trim(), passwordHash, role]);
+    response.status(201).json({ id: result.insertId });
+  } catch (error) { next(error); }
+});
+app.put("/api/users/:id", requireAdmin, async (request, response, next) => {
+  const { username, password, role } = request.body || {};
+  if (!validUsername(username) || !validRole(role) || (password && String(password).length < 10)) return response.status(422).json({ error: "Use a valid username, an optional password with at least 10 characters, and a role." });
+  try {
+    const [[target]] = await pool.execute("SELECT id, role FROM admin_users WHERE id = ?", [request.params.id]);
+    if (!target) return response.status(404).json({ error: "User not found." });
+    if (target.role === "admin" && role !== "admin") {
+      const [[admins]] = await pool.query("SELECT COUNT(*) AS count FROM admin_users WHERE role = 'admin'");
+      if (admins.count <= 1) return response.status(422).json({ error: "At least one administrator must remain." });
+    }
+    const passwordHash = password ? await bcrypt.hash(password, 12) : null;
+    await pool.execute("UPDATE admin_users SET username = ?, role = ?, password_hash = COALESCE(?, password_hash) WHERE id = ?", [String(username).trim(), role, passwordHash, request.params.id]);
+    response.json({ updated: true });
+  } catch (error) { next(error); }
+});
+app.delete("/api/users/:id", requireAdmin, async (request, response, next) => {
+  if (Number(request.params.id) === currentUser(request).id) return response.status(422).json({ error: "You cannot delete your own account." });
+  try {
+    const [[target]] = await pool.execute("SELECT id, role FROM admin_users WHERE id = ?", [request.params.id]);
+    if (!target) return response.json({ deleted: false });
+    if (target.role === "admin") {
+      const [[admins]] = await pool.query("SELECT COUNT(*) AS count FROM admin_users WHERE role = 'admin'");
+      if (admins.count <= 1) return response.status(422).json({ error: "At least one administrator must remain." });
+    }
+    await pool.execute("DELETE FROM admin_users WHERE id = ?", [request.params.id]);
+    response.json({ deleted: true });
+  } catch (error) { next(error); }
 });
 app.get("/api/events", async (_request, response, next) => {
   try { const [events] = await pool.query("SELECT id, title, event_date AS date, TIME_FORMAT(event_time, '%H:%i') AS time, location, category, format, description FROM events ORDER BY event_date, event_time"); response.json(events); } catch (error) { next(error); }
@@ -88,7 +141,7 @@ const validMember = (member) => {
   const validInstagram = !instagramUrl || /^https:\/\/(www\.)?instagram\.com\//i.test(instagramUrl);
   return name && name.length <= 80 && role.length <= 80 && bio && bio.length <= 2000 && imageUrl.length <= 2048 && instagramUrl.length <= 2048 && validUrl(imageUrl) && validInstagram && Number.isInteger(sortOrder) && sortOrder >= 0 ? { name, role, bio, imageUrl, instagramUrl, sortOrder } : null;
 };
-app.post("/api/uploads/team-image", requireAdmin, upload.single("image"), async (request, response, next) => {
+app.post("/api/uploads/team-image", requireTeamManager, upload.single("image"), async (request, response, next) => {
   if (!request.file) return response.status(422).json({ error: "Please select a JPG, PNG, or WebP image up to 5 MB." });
   try {
     if (!await validImageFile(request.file)) {
@@ -98,12 +151,12 @@ app.post("/api/uploads/team-image", requireAdmin, upload.single("image"), async 
     response.status(201).json({ imageUrl: `/uploads/team/${request.file.filename}` });
   } catch (error) { next(error); }
 });
-app.post("/api/team-members", requireAdmin, async (request, response, next) => {
+app.post("/api/team-members", requireTeamManager, async (request, response, next) => {
   const member = validMember(request.body || {});
   if (!member) return response.status(422).json({ error: "Please provide a valid name, role, bio, and display order." });
   try { const [result] = await pool.execute("INSERT INTO team_members (name, role, bio, image_url, instagram_url, sort_order) VALUES (?, ?, ?, ?, ?, ?)", [member.name, member.role, member.bio, member.imageUrl, member.instagramUrl, member.sortOrder]); response.status(201).json({ id: result.insertId }); } catch (error) { next(error); }
 });
-app.put("/api/team-members/:id", requireAdmin, async (request, response, next) => {
+app.put("/api/team-members/:id", requireTeamManager, async (request, response, next) => {
   const member = validMember(request.body || {});
   if (!member) return response.status(422).json({ error: "Please provide a valid name, role, bio, and display order." });
   try {
@@ -113,7 +166,7 @@ app.put("/api/team-members/:id", requireAdmin, async (request, response, next) =
     response.json({ updated: result.affectedRows === 1 });
   } catch (error) { next(error); }
 });
-app.delete("/api/team-members/:id", requireAdmin, async (request, response, next) => {
+app.delete("/api/team-members/:id", requireTeamManager, async (request, response, next) => {
   try {
     const [[current]] = await pool.execute("SELECT image_url FROM team_members WHERE id = ?", [request.params.id]);
     const [result] = await pool.execute("DELETE FROM team_members WHERE id = ?", [request.params.id]);
@@ -121,13 +174,13 @@ app.delete("/api/team-members/:id", requireAdmin, async (request, response, next
     response.json({ deleted: result.affectedRows === 1 });
   } catch (error) { next(error); }
 });
-app.post("/api/events", requireAdmin, async (request, response, next) => {
+app.post("/api/events", requireEventManager, async (request, response, next) => {
   const event = request.body || {};
   const title = String(event.title || "").trim(), date = String(event.date || ""), time = String(event.time || ""), category = String(event.category || "").trim();
   if (!title || title.length > 160 || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time) || !category) return response.status(422).json({ error: "Please provide a valid title, date, time, and category." });
   try { const [result] = await pool.execute("INSERT INTO events (title, event_date, event_time, location, category, format, description) VALUES (?, ?, ?, ?, ?, ?, ?)", [title, date, time, String(event.location || "").trim(), category, String(event.format || "").trim(), String(event.description || "").trim()]); response.status(201).json({ id: result.insertId }); } catch (error) { next(error); }
 });
-app.delete("/api/events/:id", requireAdmin, async (request, response, next) => {
+app.delete("/api/events/:id", requireEventManager, async (request, response, next) => {
   try { const [result] = await pool.execute("DELETE FROM events WHERE id = ?", [request.params.id]); response.json({ deleted: result.affectedRows === 1 }); } catch (error) { next(error); }
 });
 app.use((error, _request, response, _next) => {
@@ -144,6 +197,7 @@ async function start() {
     const schema = await fs.readFile(path.join(__dirname, "database", "schema.sql"), "utf8");
     await pool.query(schema);
     await ensureTeamMembers(pool);
+    await ensureAdminUsers(pool, process.env);
     console.log("Database schema is ready.");
   } catch (error) {
     console.error("Database migration failed:", error.message);

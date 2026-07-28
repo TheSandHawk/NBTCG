@@ -25,3 +25,13 @@ CREATE TABLE IF NOT EXISTS team_members (
   UNIQUE KEY team_members_name (name),
   INDEX team_members_sort (sort_order, name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS admin_users (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  username VARCHAR(80) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('admin', 'editor', 'team_manager', 'event_manager') NOT NULL DEFAULT 'editor',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY admin_users_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
