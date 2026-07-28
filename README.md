@@ -71,6 +71,7 @@ Create `.env` locally and do not commit it. Use `.env.example` as a template.
 | `ADMIN_USERNAME` | Username for the administration area |
 | `ADMIN_PASSWORD_HASH` | bcrypt hash of the administrator password |
 | `SESSION_COOKIE_SECURE` | Set to `true` when using HTTPS in production |
+| `ACTIVITY_LOG_RETENTION_DAYS` | Number of days to retain activity logs; defaults to `180` |
 
 ## Production and deployment
 

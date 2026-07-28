@@ -20,10 +20,12 @@ const teamMemberSubmit = document.querySelector("#team-member-submit");
 const teamMemberCancel = document.querySelector("#team-member-cancel");
 const teamMemberImage = document.querySelector("#member-image");
 const usersNavigation = document.querySelector("#users-navigation");
+const logsNavigation = document.querySelector("#logs-navigation");
 const eventsNavigation = document.querySelector("#events-navigation");
 const teamMembersNavigation = document.querySelector("#team-members-navigation");
 const userForm = document.querySelector("#user-form");
 const usersContainer = document.querySelector("#admin-users-container");
+const activityLogContainer = document.querySelector("#admin-activity-log");
 const userFormTitle = document.querySelector("#user-form-title");
 const userSubmit = document.querySelector("#user-submit");
 const userCancel = document.querySelector("#user-cancel");
@@ -62,12 +64,16 @@ const showAdmin = (session) => {
   adminApp.hidden = false;
   document.title = "Administration | Northbound TCG";
   usersNavigation.hidden = currentUserRole !== "admin";
+  logsNavigation.hidden = currentUserRole !== "admin";
   eventsNavigation.hidden = !["admin", "editor", "event_manager"].includes(currentUserRole);
   teamMembersNavigation.hidden = !["admin", "editor", "team_manager"].includes(currentUserRole);
   renderAdminEventsList();
   renderTeamMembersList();
   renderOverview();
-  if (currentUserRole === "admin") renderUsersList();
+  if (currentUserRole === "admin") {
+    renderUsersList();
+    renderActivityLog();
+  }
 };
 
 const showPasswordChange = () => {
@@ -122,6 +128,34 @@ const resetUserForm = () => {
   userFormTitle.textContent = "Add user";
   userSubmit.textContent = "Add user";
   userCancel.hidden = true;
+};
+
+const renderActivityLog = async () => {
+  if (!activityLogContainer || currentUserRole !== "admin") return;
+  try {
+    const logs = await request("/api/activity-logs");
+    if (!logs.length) {
+      activityLogContainer.innerHTML = "<div class=\"admin-empty-events\"><p>No activity has been recorded yet.</p></div>";
+      return;
+    }
+    activityLogContainer.replaceChildren();
+    logs.forEach((log) => {
+      const item = document.createElement("div");
+      item.className = "admin-event-item";
+      const info = document.createElement("div");
+      info.className = "admin-event-info";
+      const title = document.createElement("strong");
+      title.className = "admin-event-title";
+      title.textContent = `${log.actorUsername} — ${log.action}${log.target ? `: ${log.target}` : ""}`;
+      const meta = document.createElement("p");
+      meta.className = "admin-event-meta";
+      const timestamp = new Date(log.createdAt).toLocaleString();
+      meta.textContent = `${timestamp}${log.details ? ` · ${log.details}` : ""}`;
+      info.append(title, meta);
+      item.append(info);
+      activityLogContainer.append(item);
+    });
+  } catch (error) { activityLogContainer.textContent = error.message; }
 };
 
 const renderUsersList = async () => {

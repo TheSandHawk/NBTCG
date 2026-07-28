@@ -112,6 +112,10 @@
                 <span aria-hidden="true">&#128100;</span>
                 Users
               </a>
+              <a id="logs-navigation" href="#logs">
+                <span aria-hidden="true">&#128203;</span>
+                Activity log
+              </a>
               <a href="#planned" hidden>
                 <span aria-hidden="true">◇</span>
                 Planned areas
@@ -290,6 +294,19 @@
               <div id="admin-users-container" class="admin-events-list"></div>
             </article>
           </div>
+        </section>
+
+        <section id="logs" class="admin-section" hidden>
+          <div class="admin-section-heading">
+            <div>
+              <p class="eyebrow">Administrator only</p>
+              <h2>Activity log</h2>
+              <p class="admin-intro">The latest 200 administrative actions, newest first.</p>
+            </div>
+          </div>
+          <article class="admin-card">
+            <div id="admin-activity-log" class="admin-events-list"></div>
+          </article>
         </section>
 
         <section id="planned" class="admin-section" hidden>

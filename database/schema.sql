@@ -37,3 +37,14 @@ CREATE TABLE IF NOT EXISTS admin_users (
   PRIMARY KEY (id),
   UNIQUE KEY admin_users_username (username)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS activity_logs (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  actor_username VARCHAR(80) NOT NULL,
+  action VARCHAR(120) NOT NULL,
+  target VARCHAR(255) NOT NULL DEFAULT '',
+  details VARCHAR(500) NOT NULL DEFAULT '',
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  INDEX activity_logs_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

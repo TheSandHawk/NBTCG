@@ -16,6 +16,7 @@ if (missing.length) throw new Error(`Missing environment variables: ${missing.jo
 const app = express();
 const production = process.env.NODE_ENV === "production";
 const port = Number(process.env.PORT || 3000);
+const activityLogRetentionDays = Math.max(1, Number(process.env.ACTIVITY_LOG_RETENTION_DAYS || 180));
 const sessions = new Map();
 const uploadDirectory = path.join(__dirname, "uploads", "team");
 const pool = mysql.createPool({ host: process.env.MYSQL_HOST, port: Number(process.env.MYSQL_PORT || 3306), database: process.env.MYSQL_DATABASE, user: process.env.MYSQL_USER, password: process.env.MYSQL_PASSWORD, connectionLimit: 5, dateStrings: true, multipleStatements: true });
@@ -37,6 +38,16 @@ const requireRole = (...roles) => (request, response, next) => {
 const requireAdmin = requireRole("admin");
 const requireTeamManager = requireRole("admin", "editor", "team_manager");
 const requireEventManager = requireRole("admin", "editor", "event_manager");
+const logActivity = async (request, action, target = "", details = "") => {
+  const user = currentUser(request);
+  if (!user) return;
+  try { await pool.execute("INSERT INTO activity_logs (actor_username, action, target, details) VALUES (?, ?, ?, ?)", [user.username, action, target, details]); } catch (error) { console.error("Activity logging failed:", error.message); }
+};
+const cleanupActivityLogs = async () => {
+  const cutoff = new Date(Date.now() - activityLogRetentionDays * 24 * 60 * 60 * 1000);
+  const [result] = await pool.execute("DELETE FROM activity_logs WHERE created_at < ?", [cutoff]);
+  if (result.affectedRows) console.log(`Deleted ${result.affectedRows} expired activity log entries.`);
+};
 const upload = multer({
   storage: multer.diskStorage({
     destination: (_request, _file, callback) => callback(null, uploadDirectory),
@@ -86,6 +97,7 @@ app.post("/api/auth", async (request, response) => {
       const passwordHash = await bcrypt.hash(newPassword, 12);
       await pool.execute("UPDATE admin_users SET password_hash = ?, must_change_password = 0 WHERE id = ?", [passwordHash, user.id]);
       user.mustChangePassword = false;
+      await logActivity(request, "Changed password", user.username);
       return response.json({ authenticated: true, username: user.username, role: user.role, mustChangePassword: false });
     } catch (_error) { return response.status(500).json({ error: "Unable to update password." }); }
   }
@@ -95,11 +107,15 @@ app.post("/api/auth", async (request, response) => {
   if (!valid) return response.status(401).json({ error: "Invalid credentials." });
   const token = crypto.randomBytes(32).toString("hex");
   sessions.set(token, { id: user.id, username: user.username, role: user.role, mustChangePassword: Boolean(user.mustChangePassword) });
+  await logActivity(request, "Signed in", user.username);
   response.cookie("nbtcg_session", token, { httpOnly: true, sameSite: "lax", secure: process.env.SESSION_COOKIE_SECURE === "true", maxAge: 43200000 });
   return response.json({ authenticated: true, username: user.username, role: user.role, mustChangePassword: Boolean(user.mustChangePassword) });
 });
 const validUsername = (value) => /^[a-zA-Z0-9._-]{3,80}$/.test(String(value || "").trim());
 const validRole = (value) => ["admin", "editor", "team_manager", "event_manager"].includes(value);
+app.get("/api/activity-logs", requireAdmin, async (_request, response, next) => {
+  try { const [logs] = await pool.query("SELECT id, actor_username AS actorUsername, action, target, details, created_at AS createdAt FROM activity_logs ORDER BY created_at DESC, id DESC LIMIT 200"); response.json(logs); } catch (error) { next(error); }
+});
 app.get("/api/users", requireAdmin, async (_request, response, next) => {
   try { const [users] = await pool.query("SELECT id, username, role, must_change_password AS mustChangePassword, is_protected AS isProtected, created_at AS createdAt FROM admin_users ORDER BY username"); response.json(users); } catch (error) { next(error); }
 });
@@ -109,6 +125,7 @@ app.post("/api/users", requireAdmin, async (request, response, next) => {
   try {
     const passwordHash = await bcrypt.hash(password, 12);
     const [result] = await pool.execute("INSERT INTO admin_users (username, password_hash, role, must_change_password) VALUES (?, ?, ?, ?)", [String(username).trim(), passwordHash, role, Boolean(mustChangePassword)]);
+    await logActivity(request, "Created user", String(username).trim(), role);
     response.status(201).json({ id: result.insertId });
   } catch (error) { next(error); }
 });
@@ -116,7 +133,7 @@ app.put("/api/users/:id", requireAdmin, async (request, response, next) => {
   const { username, password, role, mustChangePassword } = request.body || {};
   if (!validUsername(username) || !validRole(role) || (password && String(password).length < 10)) return response.status(422).json({ error: "Use a valid username, an optional password with at least 10 characters, and a role." });
   try {
-    const [[target]] = await pool.execute("SELECT id, role, is_protected AS isProtected FROM admin_users WHERE id = ?", [request.params.id]);
+    const [[target]] = await pool.execute("SELECT id, username, role, is_protected AS isProtected FROM admin_users WHERE id = ?", [request.params.id]);
     if (!target) return response.status(404).json({ error: "User not found." });
     if (target.role === "admin" && role !== "admin") {
       const [[admins]] = await pool.query("SELECT COUNT(*) AS count FROM admin_users WHERE role = 'admin'");
@@ -124,13 +141,14 @@ app.put("/api/users/:id", requireAdmin, async (request, response, next) => {
     }
     const passwordHash = password ? await bcrypt.hash(password, 12) : null;
     await pool.execute("UPDATE admin_users SET username = ?, role = ?, password_hash = COALESCE(?, password_hash), must_change_password = ? WHERE id = ?", [String(username).trim(), role, passwordHash, Boolean(mustChangePassword), request.params.id]);
+    await logActivity(request, "Updated user", String(username).trim(), role);
     response.json({ updated: true });
   } catch (error) { next(error); }
 });
 app.delete("/api/users/:id", requireAdmin, async (request, response, next) => {
   if (Number(request.params.id) === currentUser(request).id) return response.status(422).json({ error: "You cannot delete your own account." });
   try {
-    const [[target]] = await pool.execute("SELECT id, role, is_protected AS isProtected FROM admin_users WHERE id = ?", [request.params.id]);
+    const [[target]] = await pool.execute("SELECT id, username, role, is_protected AS isProtected FROM admin_users WHERE id = ?", [request.params.id]);
     if (!target) return response.json({ deleted: false });
     if (target.isProtected) return response.status(422).json({ error: "The primary administrator account cannot be deleted." });
     if (target.role === "admin") {
@@ -138,6 +156,7 @@ app.delete("/api/users/:id", requireAdmin, async (request, response, next) => {
       if (admins.count <= 1) return response.status(422).json({ error: "At least one administrator must remain." });
     }
     await pool.execute("DELETE FROM admin_users WHERE id = ?", [request.params.id]);
+    await logActivity(request, "Deleted user", target.username);
     response.json({ deleted: true });
   } catch (error) { next(error); }
 });
@@ -162,13 +181,15 @@ app.post("/api/uploads/team-image", requireTeamManager, upload.single("image"), 
       await fs.unlink(request.file.path).catch(() => {});
       return response.status(422).json({ error: "The uploaded file is not a valid JPG, PNG, or WebP image." });
     }
-    response.status(201).json({ imageUrl: `/uploads/team/${request.file.filename}` });
+    const imageUrl = `/uploads/team/${request.file.filename}`;
+    await logActivity(request, "Uploaded team image", request.file.originalname);
+    response.status(201).json({ imageUrl });
   } catch (error) { next(error); }
 });
 app.post("/api/team-members", requireTeamManager, async (request, response, next) => {
   const member = validMember(request.body || {});
   if (!member) return response.status(422).json({ error: "Please provide a valid name, role, bio, and display order." });
-  try { const [result] = await pool.execute("INSERT INTO team_members (name, role, bio, image_url, instagram_url, sort_order) VALUES (?, ?, ?, ?, ?, ?)", [member.name, member.role, member.bio, member.imageUrl, member.instagramUrl, member.sortOrder]); response.status(201).json({ id: result.insertId }); } catch (error) { next(error); }
+  try { const [result] = await pool.execute("INSERT INTO team_members (name, role, bio, image_url, instagram_url, sort_order) VALUES (?, ?, ?, ?, ?, ?)", [member.name, member.role, member.bio, member.imageUrl, member.instagramUrl, member.sortOrder]); await logActivity(request, "Created team member", member.name); response.status(201).json({ id: result.insertId }); } catch (error) { next(error); }
 });
 app.put("/api/team-members/:id", requireTeamManager, async (request, response, next) => {
   const member = validMember(request.body || {});
@@ -177,14 +198,16 @@ app.put("/api/team-members/:id", requireTeamManager, async (request, response, n
     const [[current]] = await pool.execute("SELECT image_url FROM team_members WHERE id = ?", [request.params.id]);
     const [result] = await pool.execute("UPDATE team_members SET name = ?, role = ?, bio = ?, image_url = ?, instagram_url = ?, sort_order = ? WHERE id = ?", [member.name, member.role, member.bio, member.imageUrl, member.instagramUrl, member.sortOrder, request.params.id]);
     if (result.affectedRows === 1 && current?.image_url !== member.imageUrl) await deleteUploadedTeamImage(current?.image_url);
+    if (result.affectedRows === 1) await logActivity(request, "Updated team member", member.name);
     response.json({ updated: result.affectedRows === 1 });
   } catch (error) { next(error); }
 });
 app.delete("/api/team-members/:id", requireTeamManager, async (request, response, next) => {
   try {
-    const [[current]] = await pool.execute("SELECT image_url FROM team_members WHERE id = ?", [request.params.id]);
+    const [[current]] = await pool.execute("SELECT name, image_url FROM team_members WHERE id = ?", [request.params.id]);
     const [result] = await pool.execute("DELETE FROM team_members WHERE id = ?", [request.params.id]);
     if (result.affectedRows === 1) await deleteUploadedTeamImage(current?.image_url);
+    if (result.affectedRows === 1) await logActivity(request, "Deleted team member", current?.name || String(request.params.id));
     response.json({ deleted: result.affectedRows === 1 });
   } catch (error) { next(error); }
 });
@@ -192,10 +215,10 @@ app.post("/api/events", requireEventManager, async (request, response, next) => 
   const event = request.body || {};
   const title = String(event.title || "").trim(), date = String(event.date || ""), time = String(event.time || ""), category = String(event.category || "").trim();
   if (!title || title.length > 160 || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time) || !category) return response.status(422).json({ error: "Please provide a valid title, date, time, and category." });
-  try { const [result] = await pool.execute("INSERT INTO events (title, event_date, event_time, location, category, format, description) VALUES (?, ?, ?, ?, ?, ?, ?)", [title, date, time, String(event.location || "").trim(), category, String(event.format || "").trim(), String(event.description || "").trim()]); response.status(201).json({ id: result.insertId }); } catch (error) { next(error); }
+  try { const [result] = await pool.execute("INSERT INTO events (title, event_date, event_time, location, category, format, description) VALUES (?, ?, ?, ?, ?, ?, ?)", [title, date, time, String(event.location || "").trim(), category, String(event.format || "").trim(), String(event.description || "").trim()]); await logActivity(request, "Created event", title); response.status(201).json({ id: result.insertId }); } catch (error) { next(error); }
 });
 app.delete("/api/events/:id", requireEventManager, async (request, response, next) => {
-  try { const [result] = await pool.execute("DELETE FROM events WHERE id = ?", [request.params.id]); response.json({ deleted: result.affectedRows === 1 }); } catch (error) { next(error); }
+  try { const [[event]] = await pool.execute("SELECT title FROM events WHERE id = ?", [request.params.id]); const [result] = await pool.execute("DELETE FROM events WHERE id = ?", [request.params.id]); if (result.affectedRows === 1) await logActivity(request, "Deleted event", event?.title || String(request.params.id)); response.json({ deleted: result.affectedRows === 1 }); } catch (error) { next(error); }
 });
 app.use((error, _request, response, _next) => {
   if (error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") return response.status(422).json({ error: "The image must not be larger than 5 MB." });
@@ -212,6 +235,8 @@ async function start() {
     await pool.query(schema);
     await ensureTeamMembers(pool);
     await ensureAdminUsers(pool, process.env);
+    await cleanupActivityLogs();
+    setInterval(() => cleanupActivityLogs().catch((error) => console.error("Activity log cleanup failed:", error.message)), 24 * 60 * 60 * 1000).unref();
     console.log("Database schema is ready.");
   } catch (error) {
     console.error("Database migration failed:", error.message);
