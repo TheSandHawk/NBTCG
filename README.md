@@ -10,7 +10,6 @@ Northbound TCG is not officially affiliated with Riftbound or its rights holders
 - Calendar with upcoming events
 - Password-protected administration area for creating and deleting events
 - MySQL database for event data
-- “Hosted by UDS-Solutions.de” notice in the footer
 
 ## Technology
 
